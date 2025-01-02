@@ -8,6 +8,10 @@ function App() {
         longitude: number | null;
     }>({ latitude: null, longitude: null });
 
+    const [permissionStatus, setPermissionStatus] = useState<
+        "granted" | "denied" | "prompt" | "unsupported" | null
+    >(null);
+
     const baseLocation = {
         latitude: 16.059184088459475,
         longitude: 108.22383740400188,
@@ -17,6 +21,20 @@ function App() {
     const [name, setName] = useState<string>("");
 
     useEffect(() => {
+        if (navigator.permissions) {
+            navigator.permissions
+                .query({ name: "geolocation" as PermissionName })
+                .then((permissionStatus) => {
+                    permissionStatus.onchange = () => {
+                        setPermissionStatus(permissionStatus.state);
+                    };
+                })
+                .catch(() => {
+                    setPermissionStatus("unsupported"); // If the API is not supported
+                });
+        } else {
+            setPermissionStatus("unsupported"); // If the API is not supported
+        }
         if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition((position) => {
                 setLocation({
@@ -95,15 +113,9 @@ function App() {
         return earthRadius * c; // Distance in meters
     };
 
-    console.log(
-        "calculateDistance",
-        calculateDistance(
-            location.latitude as number,
-            location.longitude as number,
-            baseLocation.latitude,
-            baseLocation.longitude
-        )
-    );
+    if (permissionStatus === "denied") {
+        return <h1>Permission Denied</h1>;
+    }
 
     return (
         <div>
