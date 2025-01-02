@@ -7,6 +7,12 @@ function App() {
         latitude: number | null;
         longitude: number | null;
     }>({ latitude: null, longitude: null });
+
+    const baseLocation = {
+        latitude: 16.059184088459475,
+        longitude: 108.22383740400188,
+    };
+
     const [isInsideZone, setIsInsideZone] = useState<boolean>(false);
     const [name, setName] = useState<string>("");
 
@@ -18,14 +24,14 @@ function App() {
                     longitude: position.coords.longitude,
                 });
 
-                if (
-                    isWithin100Meters(
-                        position.coords.latitude,
-                        position.coords.longitude,
-                        16.057,
-                        108.2261504
-                    )
-                ) {
+                const distance = calculateDistance(
+                    location.latitude as number,
+                    location.longitude as number,
+                    baseLocation.latitude,
+                    baseLocation.longitude
+                );
+
+                if (distance < 100) {
                     setIsInsideZone(true);
                 } else {
                     setIsInsideZone(false);
@@ -34,35 +40,12 @@ function App() {
         } else {
             alert("Geolocation is not supported by this browser.");
         }
-    }, [location.latitude, location.longitude]);
-
-    const isWithin100Meters = (
-        currentLat: number,
-        currentLon: number,
-        targetLat: number,
-        targetLon: number
-    ) => {
-        const toRadians = (degrees: number) => (degrees * Math.PI) / 180;
-
-        const R = 6371000; // Earth's radius in meters
-        const dLat = toRadians(targetLat - currentLat);
-        const dLon = toRadians(targetLon - currentLon);
-
-        const lat1 = toRadians(currentLat);
-        const lat2 = toRadians(targetLat);
-
-        const a =
-            Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-            Math.sin(dLon / 2) *
-                Math.sin(dLon / 2) *
-                Math.cos(lat1) *
-                Math.cos(lat2);
-        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-
-        const distance = R * c; // Distance in meters
-
-        return distance <= 100; // Check if within 100 meters
-    };
+    }, [
+        location.latitude,
+        location.longitude,
+        baseLocation.latitude,
+        baseLocation.longitude,
+    ]);
 
     const writeToExcel = (data: any) => {
         const worksheet = XLSX.utils.json_to_sheet(data); // Convert JSON to sheet
@@ -87,22 +70,87 @@ function App() {
         setName(name);
     };
 
+    const calculateDistance = (
+        lat1: number,
+        lon1: number,
+        lat2: number,
+        lon2: number
+    ): number => {
+        const toRadians = (degrees: number) => (degrees * Math.PI) / 180;
+
+        const earthRadius = 6371000; // Radius of the Earth in meters
+
+        const dLat = toRadians(lat2 - lat1);
+        const dLon = toRadians(lon2 - lon1);
+
+        const a =
+            Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+            Math.cos(toRadians(lat1)) *
+                Math.cos(toRadians(lat2)) *
+                Math.sin(dLon / 2) *
+                Math.sin(dLon / 2);
+
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+        return earthRadius * c; // Distance in meters
+    };
+
+    console.log(
+        "calculateDistance",
+        calculateDistance(
+            location.latitude as number,
+            location.longitude as number,
+            baseLocation.latitude,
+            baseLocation.longitude
+        )
+    );
+
     return (
         <div>
             <h1>Geolocation</h1>
-            <p>Latitude: {location.latitude}</p>
-            <p>Longitude: {location.longitude}</p>
+            <div className="wrapper">
+                <div className="underline">
+                    <h3>Current Location</h3>
+                    <p>Latitude: {location.latitude}</p>
+                    <p>Longitude: {location.longitude}</p>
+                </div>
+                <div>
+                    <h3>Target Location: HDS Da Nang</h3>
+                    <p>Latitude: {baseLocation.latitude}</p>
+                    <p>Longitude: {baseLocation.longitude}</p>
+                </div>
+            </div>
+
+            <h3>
+                Distance To HDS Da Nang:{" "}
+                {calculateDistance(
+                    location.latitude as number,
+                    location.longitude as number,
+                    baseLocation.latitude,
+                    baseLocation.longitude
+                ).toFixed(2)}{" "}
+                meters
+            </h3>
+            <br />
             {isInsideZone ? (
-                <form onSubmit={handleSubmit}>
-                    <label htmlFor="name">Name:</label>
-                    <input
-                        type="text"
-                        id="name"
-                        name="name"
-                        onChange={handleChangeName}
-                    />
-                    <button type="submit">Submit</button>
-                </form>
+                <>
+                    <h3>You are within 100m radius !!</h3>
+                    <form onSubmit={handleSubmit}>
+                        <div className="form">
+                            <label htmlFor="name">Name:</label>
+                            <input
+                                type="text"
+                                id="name"
+                                name="name"
+                                onChange={handleChangeName}
+                                className="input"
+                            />
+                        </div>
+                        <button type="submit" className="submitButton">
+                            Submit
+                        </button>
+                    </form>
+                </>
             ) : (
                 <h3>You are not within 100m radius, please try again !!</h3>
             )}
