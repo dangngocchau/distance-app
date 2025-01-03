@@ -1,15 +1,9 @@
-#root {
-    max-width: 1280px;
-    margin: 0 auto;
-    padding: 2rem;
-    text-align: center;
-}
-
-.logo {
-    height: 6em;
-    padding: 1.5em;
-    will-change: filter;
-    transition: filter 300ms;
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f0f0f0;
+    color: #333;
 }
 .logo:hover {
     filter: drop-shadow(0 0 2em #646cffaa);
@@ -68,4 +62,43 @@
 .underline {
     border-right: 1px solid #000;
     padding-right: 20px;
+}
+.header {
+    background-color: #ffffff;
+    width: 100vw;
+    height: 60px;
+    display: flex;
+    align-items: flex-start;
+}
+.main {
+    width: 100vw;
+    height: 100vh;
+}
+.header_logo {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+    margin-left: 100px;
+}
+.banner {
+    width: 100%;
+    height: calc(100vh - 60px);
+    overflow: hidden;
+    position: relative;
+}
+.banner_img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+.content {
+    position: absolute; /* Position relative to the banner */
+    top: 50%; /* Center vertically */
+    left: 30%; /* Center horizontally */
+    transform: translate(-50%, -50%); /* Adjust for proper centering */
+    color: white; /* Text color to contrast with the image */
+    text-align: center; /* Center-align text */
+    padding: 20px; /* Add some padding around the text */
+    font-size: 1.3rem; /* Adjust font size */
 }

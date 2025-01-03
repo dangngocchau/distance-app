@@ -1,6 +1,6 @@
-import { ChangeEvent, FormEvent, useEffect, useState } from "react";
-import * as XLSX from "xlsx";
+import { useEffect, useState } from "react";
 import "./App.css";
+import { Header } from "./components/header";
 
 function App() {
     const [location, setLocation] = useState<{
@@ -8,17 +8,17 @@ function App() {
         longitude: number | null;
     }>({ latitude: null, longitude: null });
 
-    const [permissionStatus, setPermissionStatus] = useState<
-        "granted" | "denied" | "prompt" | "unsupported" | null
-    >(null);
+    const [permissionStatus, setPermissionStatus] = useState<"granted" | "denied" | "prompt" | "unsupported" | null>(
+        null
+    );
 
-    const baseLocation = {
-        latitude: 16.059184088459475,
-        longitude: 108.22383740400188,
-    };
+    const baseLocation = [
+        { latitude: 10.854515, longitude: 106.6260176 },
+        { latitude: 10.800072026385916, longitude: 106.67512713713947 },
+        { latitude: 16.0472002, longitude: 108.2199588 },
+    ];
 
     const [isInsideZone, setIsInsideZone] = useState<boolean>(false);
-    const [name, setName] = useState<string>("");
 
     useEffect(() => {
         if (navigator.permissions) {
@@ -42,58 +42,25 @@ function App() {
                     longitude: position.coords.longitude,
                 });
 
-                const distance = calculateDistance(
-                    location.latitude as number,
-                    location.longitude as number,
-                    baseLocation.latitude,
-                    baseLocation.longitude
-                );
+                // Check if the user is within 500 meters of any base location
+                const withinZone = baseLocation.some((loc) => {
+                    const distance = calculateDistance(
+                        location.latitude as number,
+                        location.longitude as number,
+                        loc.latitude,
+                        loc.longitude
+                    );
+                    return distance < 500;
+                });
 
-                if (distance < 100) {
-                    setIsInsideZone(true);
-                } else {
-                    setIsInsideZone(false);
-                }
+                setIsInsideZone(withinZone);
             });
         } else {
             alert("Geolocation is not supported by this browser.");
         }
-    }, [
-        location.latitude,
-        location.longitude,
-        baseLocation.latitude,
-        baseLocation.longitude,
-    ]);
+    }, [location.latitude, location.longitude]);
 
-    const writeToExcel = (data: any) => {
-        const worksheet = XLSX.utils.json_to_sheet(data); // Convert JSON to sheet
-        const workbook = XLSX.utils.book_new(); // Create a new workbook
-        XLSX.utils.book_append_sheet(workbook, worksheet, "Locations"); // Add sheet to workbook
-        XLSX.writeFile(workbook, "locations.xlsx");
-    };
-
-    const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
-        e.preventDefault();
-        writeToExcel([
-            {
-                name: name,
-                latitude: location.latitude,
-                longitude: location.longitude,
-            },
-        ]);
-    };
-
-    const handleChangeName = (e: ChangeEvent<HTMLInputElement>) => {
-        const name = e.target.value;
-        setName(name);
-    };
-
-    const calculateDistance = (
-        lat1: number,
-        lon1: number,
-        lat2: number,
-        lon2: number
-    ): number => {
+    const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
         const toRadians = (degrees: number) => (degrees * Math.PI) / 180;
 
         const earthRadius = 6371000; // Radius of the Earth in meters
@@ -103,70 +70,43 @@ function App() {
 
         const a =
             Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-            Math.cos(toRadians(lat1)) *
-                Math.cos(toRadians(lat2)) *
-                Math.sin(dLon / 2) *
-                Math.sin(dLon / 2);
+            Math.cos(toRadians(lat1)) * Math.cos(toRadians(lat2)) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
 
         const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 
         return earthRadius * c; // Distance in meters
     };
 
-    if (permissionStatus === "denied") {
-        return <h1>Permission Denied</h1>;
-    }
-
     return (
-        <div>
-            <h1>Geolocation</h1>
-            <div className="wrapper">
-                <div className="underline">
-                    <h3>Current Location</h3>
-                    <p>Latitude: {location.latitude}</p>
-                    <p>Longitude: {location.longitude}</p>
-                </div>
-                <div>
-                    <h3>Target Location: HDS Da Nang</h3>
-                    <p>Latitude: {baseLocation.latitude}</p>
-                    <p>Longitude: {baseLocation.longitude}</p>
-                </div>
+        <main className="main">
+            <Header />
+            <div className="banner">
+                <img
+                    src="https://hitachids.com/vn-english/wp-content/uploads/sites/6/2024/06/ds-overview-1-e1718270241356.jpg"
+                    alt="banner"
+                    className="banner_img"
+                />
             </div>
-
-            <h3>
-                Distance To HDS Da Nang:{" "}
-                {calculateDistance(
-                    location.latitude as number,
-                    location.longitude as number,
-                    baseLocation.latitude,
-                    baseLocation.longitude
-                ).toFixed(2)}{" "}
-                meters
-            </h3>
-            <br />
-            {isInsideZone ? (
-                <>
-                    <h3>You are within 100m radius !!</h3>
-                    <form onSubmit={handleSubmit}>
-                        <div className="form">
-                            <label htmlFor="name">Name:</label>
-                            <input
-                                type="text"
-                                id="name"
-                                name="name"
-                                onChange={handleChangeName}
-                                className="input"
-                            />
-                        </div>
-                        <button type="submit" className="submitButton">
-                            Submit
-                        </button>
-                    </form>
-                </>
-            ) : (
-                <h3>You are not within 100m radius, please try again !!</h3>
-            )}
-        </div>
+            <div className="content">
+                <h2>
+                    Year-End Party 2024 <br />
+                    One Hitachi - Global Mindset – Vietnam Culture
+                </h2>
+                {isInsideZone ? (
+                    <button
+                        onClick={() => {
+                            // Redirect
+                            window.location.href =
+                                "https://forms.office.com/Pages/ResponsePage.aspx?id=Fx55GFlhUk-o1N6BTKgoSnPuMPecgIBHrBWigH1oSM5UNUZOOEtRMEpUT0pRUVU4WVIzTFpIUkZDNy4u";
+                        }}
+                    >
+                        Go To Form
+                    </button>
+                ) : (
+                    <h3>Sorry, you are not within the zone to access the form !!!</h3>
+                )}
+            </div>
+        </main>
     );
 }
 
