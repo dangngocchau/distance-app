@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import "./App.css";
 import { Header } from "./components/header";
 
@@ -12,11 +12,14 @@ function App() {
         null
     );
 
-    const baseLocation = [
-        { latitude: 10.854515, longitude: 106.6260176 },
-        { latitude: 10.800072026385916, longitude: 106.67512713713947 },
-        { latitude: 16.0472002, longitude: 108.2199588 },
-    ];
+    const baseLocation = useMemo(
+        () => [
+            { latitude: 10.854515, longitude: 106.6260176 },
+            { latitude: 10.800072026385916, longitude: 106.67512713713947 },
+            { latitude: 16.0472002, longitude: 108.2199588 },
+        ],
+        [] // Empty dependency array ensures it is created only once
+    );
 
     const [isInsideZone, setIsInsideZone] = useState<boolean>(false);
 
@@ -92,7 +95,7 @@ function App() {
                     Year-End Party 2024 <br />
                     One Hitachi - Global Mindset – Vietnam Culture
                 </h2>
-                {isInsideZone ? (
+                {isInsideZone || permissionStatus === "granted" ? (
                     <button
                         onClick={() => {
                             // Redirect
